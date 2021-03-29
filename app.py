@@ -1,6 +1,6 @@
-from flask import Flask, url_for, render_template
+from flask import Flask, url_for, render_template, flash, request, redirect
 app = Flask(__name__)
-
+app.config['SECRET_KEY'] = "qwer"
 
 from flask_sqlalchemy import SQLAlchemy
 import sys
@@ -15,8 +15,22 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-@app.route('/')
+
+@app.route('/', methods=['GET', 'POST'])
 def index():
+    # 假设是get请求，直接重定向主页；
+    # 假如是post请求且表单验证通过，写入数据库，重定向主页；假设验证不通过，提示错误，重定向主页
+    if request.method == 'POST':  # 如果是post方法
+        title = request.form.get('title')  # 通过request表单获取title值
+        year = request.form.get('year')  # 通过request表单获取year值
+        if not title or not year or len(title) > 60 or len(year) > 4:  # 如果任一个变量输入有误
+            flash('Invalid input')  # 提示错误信息
+            return redirect(url_for("index"))  # 重定向主页
+        movie = Movie(title=title, year=year)  # 创建记录
+        db.session.add(movie)  # 添加数据库会话
+        db.session.commit()  # 提交数据库会话
+        flash("Item created")  # 提示成功信息
+        return redirect(url_for("index"))  # 重定向主页
     movies = Movie.query.all()
     return render_template("index.html", movies=movies)
 
@@ -31,6 +45,30 @@ def page_not_found(e):
     return render_template("base.html"), 404
 
 
+@app.route("/movie/edit/<int:movie_id>", methods=['GET', 'POST'])
+def edit(movie_id):
+    movie = Movie.query.get_or_404(movie_id)
+    if request.method == "POST":  # 处理编辑表单的请求
+        title = request.form['title']
+        year = request.form['year']
+        if not title or not year or len(title) > 60 or len(year) > 4:
+            flash("Invalid input")
+            return redirect(url_for("edit", movie_id=movie_id))
+        movie.title = title    # 更新标题
+        movie.year = year  # 更新年份
+        db.session.commit()  # 提交数据库会话
+        flash("Item updated")
+        return redirect(url_for("index"))
+    return render_template("edit.html", movie=movie)
+
+
+@app.route("/movie/delete/<int:movie_id>", methods=["POST"])  # 限定只接受post请求
+def delete(movie_id):
+    movie = Movie.query.get_or_404(movie_id)
+    db.session.delete(movie)
+    db.session.commit()
+    flash("Item Deleted")
+    return redirect(url_for("index"))
 # 模板上下文处理函数
 @app.context_processor
 def inject_user():  # 函数名可以随意修改
