@@ -56,7 +56,7 @@ def user_page(name):
 
 @app.errorhandler(404)
 def page_not_found(e):
-    return render_template("base.html"), 404
+    return render_template("404.html"), 404
 
 
 @app.route("/movie/edit/<int:movie_id>", methods=['GET', 'POST'])
