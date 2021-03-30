@@ -1,9 +1,10 @@
 import unittest
-from app import app, db, Movie, User, forge
+from Watchlist import app, db
+from Watchlist.models import User, Movie
+from Watchlist.commands import forge
 
 
 class WatchlistTestCase(unittest.TestCase):
-
     def setUp(self):
         # 更新配置
         app.config.update(
@@ -22,7 +23,6 @@ class WatchlistTestCase(unittest.TestCase):
 
         self.client = app.test_client()  # 创建测试客户端
         self.runner = app.test_cli_runner()  # 创建测试命令运行器
-
 
     def tearDown(self):
         db.session.remove()  # 清除数据库会话
@@ -63,6 +63,7 @@ class WatchlistTestCase(unittest.TestCase):
         data = response.get_data(as_text=True)
         self.assertIn('Item created', data)
         self.assertIn('New Movie', data)
+
     # 测试登录保护
     def test_login_protect(self):
         response = self.client.get('/')
@@ -78,10 +79,6 @@ class WatchlistTestCase(unittest.TestCase):
         result = self.runner.invoke(forge)
         self.assertIn('Done', result.output)
         self.assertNotEqual(Movie.query.count(), 0)
-
-
-
-
 
 
 if __name__ == '__main__':
