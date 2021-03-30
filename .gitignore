@@ -8,3 +8,5 @@ htmlcov/
 .coverage
 venv
 env
+*.iml
+.idea
